@@ -1,0 +1,64 @@
+group 'com.ebay.npd'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+
+mainClassName = "com.ebay.npd.HelloWorldServer"
+
+sourceCompatibility = 1.8
+
+def grpcVersion = '1.15.1' // CURRENT_GRPC_VERSION
+def protobufVersion = '3.5.1'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    runtime 'com.google.protobuf:protobuf-java:${protobufVersion}'
+    compile "io.grpc:grpc-protobuf:${grpcVersion}"
+    compile "io.grpc:grpc-stub:${grpcVersion}"
+    compile "io.grpc:grpc-netty-shaded:${grpcVersion}"
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.1'
+    }
+}
+
+protobuf {
+    protoc { artifact = "com.google.protobuf:protoc:${protobufVersion}" }
+    plugins {
+        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}" }
+    }
+    generateProtoTasks {
+        all()*.plugins { grpc {} }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes('Main-Class': 'com.ebay.npd.HelloWorldServer')
+    }
+}
