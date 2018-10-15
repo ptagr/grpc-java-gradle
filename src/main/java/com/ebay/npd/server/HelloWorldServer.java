@@ -1,4 +1,4 @@
-package com.ebay.npd;
+package com.ebay.npd.server;
 
 import com.ebay.npd.helloworld.GreeterGrpc;
 import com.ebay.npd.helloworld.HelloReply;
@@ -9,6 +9,7 @@ import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 public class HelloWorldServer {
     private static final Logger logger = Logger.getLogger(HelloWorldServer.class.getName());
@@ -60,9 +61,25 @@ public class HelloWorldServer {
     static class GreeterImpl extends GreeterGrpc.GreeterImplBase {
         @Override
         public void sayHello(HelloRequest request, StreamObserver<HelloReply> responseObserver) {
-            logger.info("Got request with name : "+ request.getName());
-            HelloReply reply = HelloReply.newBuilder().setMessage("Hello " + request.getName()).build();
-            responseObserver.onNext(reply);
+            logger.info("sayHello: Got request with name : "+ request.getName());
+
+            responseObserver.onCompleted();
+        }
+
+        @Override
+        public void sayHelloResponseStreaming(HelloRequest request, StreamObserver<HelloReply> responseObserver) {
+            logger.info("sayHelloResponseStreaming: Got request with name : "+ request.getName());
+            IntStream.range(0, 10).forEach(
+                    i -> {
+                        HelloReply reply = HelloReply.newBuilder().setMessage(i + ": Hello " + request.getName()).build();
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        responseObserver.onNext(reply);
+                    }
+            );
             responseObserver.onCompleted();
         }
     }

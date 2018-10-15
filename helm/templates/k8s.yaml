@@ -1,0 +1,49 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+    team: {{ .Values.team }}
+spec:
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      annotations:
+        sumologic.com/include: "false"
+        sumologic.com/sourceCategory: {{.Values.env}}/{{.Values.region}}/{{.Values.gcp_project}}
+      labels:
+        app: {{ .Chart.Name }}
+        team: {{ .Values.team }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: gcr.io/npd-shared/grpc-java-gradle-server
+        ports:
+        - containerPort: 443
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 2
+            memory: 4Gi
+          requests:
+            cpu: 50m
+            memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+    team: {{ .Values.team }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: 50051
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Chart.Name }}
+    team: {{ .Values.team }}

@@ -4,7 +4,6 @@ version '1.0-SNAPSHOT'
 apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 
 mainClassName = "com.ebay.npd.HelloWorldServer"
@@ -34,7 +33,6 @@ buildscript {
     }
     dependencies {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.1'
     }
 }
 
@@ -51,6 +49,7 @@ protobuf {
 sourceSets {
     main {
         java {
+            srcDirs 'src/main/java'
             srcDirs 'build/generated/source/proto/main/grpc'
             srcDirs 'build/generated/source/proto/main/java'
         }
@@ -59,6 +58,31 @@ sourceSets {
 
 jar {
     manifest {
-        attributes('Main-Class': 'com.ebay.npd.HelloWorldServer')
+        attributes('Main-Class': 'com.ebay.npd.server.HelloWorldServer')
     }
+
+    from {
+        sourceSets.main.output
+
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+        configurations.runtime.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+
+    archiveName 'grpc-java-gradle-server.jar'
 }
+
+task clientJar(type: Jar) {
+    with jar
+
+    manifest {
+        attributes('Main-Class': 'com.ebay.npd.client.HelloWorldClient')
+    }
+
+    archiveName 'grpc-java-gradle-client.jar'
+}
+
+assemble.finalizedBy(clientJar)
