@@ -47,3 +47,21 @@ spec:
   selector:
     app: {{ .Chart.Name }}
     team: {{ .Values.team }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}-headless
+  labels:
+    app: {{ .Chart.Name }}
+    team: {{ .Values.team }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 50051
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Chart.Name }}
+    team: {{ .Values.team }}

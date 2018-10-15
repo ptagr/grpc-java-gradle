@@ -8,11 +8,15 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
 public class HelloWorldServer {
     private static final Logger logger = Logger.getLogger(HelloWorldServer.class.getName());
+
+    private static String self = "";
+
 
     private Server server;
 
@@ -53,6 +57,8 @@ public class HelloWorldServer {
      * Main launches the server from the command line.
      */
     public static void main(String[] args) throws IOException, InterruptedException {
+
+        self = InetAddress.getLocalHost().getHostName();
         final HelloWorldServer server = new HelloWorldServer();
         server.start();
         server.blockUntilShutdown();
@@ -61,19 +67,18 @@ public class HelloWorldServer {
     static class GreeterImpl extends GreeterGrpc.GreeterImplBase {
         @Override
         public void sayHello(HelloRequest request, StreamObserver<HelloReply> responseObserver) {
-            logger.info("sayHello: Got request with name : "+ request.getName());
-
+            logger.info("sayHello: Got request with name : "+ request.getName()+ " from "+self);
             responseObserver.onCompleted();
         }
 
         @Override
         public void sayHelloResponseStreaming(HelloRequest request, StreamObserver<HelloReply> responseObserver) {
-            logger.info("sayHelloResponseStreaming: Got request with name : "+ request.getName());
+            logger.info("sayHelloResponseStreaming: Got request with name : "+ request.getName()+ " from "+self);
             IntStream.range(0, 10).forEach(
                     i -> {
-                        HelloReply reply = HelloReply.newBuilder().setMessage(i + ": Hello " + request.getName()).build();
+                        HelloReply reply = HelloReply.newBuilder().setMessage(i + ": Hello " + request.getName() + " from "+self).build();
                         try {
-                            Thread.sleep(500);
+                            Thread.sleep(50);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
