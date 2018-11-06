@@ -1,12 +1,24 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'com.google.protobuf' version '0.8.6'
+    id 'application'
+    id 'com.google.cloud.tools.jib' version '0.9.11'
+}
+
 group 'com.ebay.npd'
 version '1.0-SNAPSHOT'
 
-apply plugin: 'java'
-apply plugin: 'com.google.protobuf'
-apply plugin: 'application'
-
-
-mainClassName = "com.ebay.npd.HelloWorldServer"
+mainClassName = "com.ebay.npd.server.HelloWorldServer"
 
 sourceCompatibility = 1.8
 
@@ -24,16 +36,6 @@ dependencies {
     compile "io.grpc:grpc-netty-shaded:${grpcVersion}"
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
-}
-
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
-    }
 }
 
 protobuf {
@@ -56,23 +58,18 @@ sourceSets {
     }
 }
 
-jar {
-    manifest {
-        attributes('Main-Class': 'com.ebay.npd.server.HelloWorldServer')
-    }
-
+jib {
     from {
-        sourceSets.main.output
-
-        configurations.compile.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-        configurations.runtime.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
+        image = 'openjdk:alpine'
     }
-
-    archiveName 'grpc-java-gradle-server.jar'
+    container{
+        mainClass = 'com.ebay.npd.server.HelloWorldServer'
+        ports = ['50051']
+    }
+    to {
+        image = 'gcr.io/npd-shared/grpc-java-gradle'
+        credHelper = 'gcr'
+    }
 }
 
 task clientJar(type: Jar) {
@@ -84,5 +81,7 @@ task clientJar(type: Jar) {
 
     archiveName 'grpc-java-gradle-client.jar'
 }
+
+tasks.build.dependsOn tasks.jib
 
 assemble.finalizedBy(clientJar)
