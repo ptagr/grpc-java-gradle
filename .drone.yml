@@ -1,0 +1,26 @@
+image-default: &image-default
+  image: gcr.io/npd-shared/cd:latest
+
+pipeline:
+  gcr:
+    <<: *image-default
+    run: gcr
+    environment:
+      - PLUGIN_PATH=target/docker/stage
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: push
+      branch: master
+
+  rollout_dev:
+    <<: *image-default
+    group: rollout-nonprod
+    run: deploy
+    env: dev
+    team: shared
+    initiative: n0
+    when:
+      event: push
+      branch: master
